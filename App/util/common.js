@@ -1,0 +1,1 @@
+"use strict";window,console.log("我是公共的js");
