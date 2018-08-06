@@ -7,12 +7,14 @@ const babel = require('gulp-babel');
 const uglify = require('gulp-uglify');
 const url  = require('url');
 const proxy   = require('proxy-middleware');
+const autoprefixer = require('gulp-autoprefixer');
 
 const AppName = 'App';     //项目名
 
 //合并HTML
 gulp.task('fileInclude',function (done) {
   gulp.src('src/view/**/*.html')
+    .on('error', swallowError)
     .pipe(fileInclude({
       prefix:'@@',
       basePath:'@file'
@@ -25,21 +27,53 @@ gulp.task('fileInclude',function (done) {
 gulp.task('cssmin',function (done) {
   gulp.src(['src/css/*.css'])
     .pipe(cssmin())
-    .pipe(gulp.dest(AppName+'/css/'));
+    .pipe(gulp.dest(AppName+'/css/'))
+    .pipe(autoprefixer({
+      // 兼容css3
+      browsers: ['last 2 versions'], // 浏览器版本
+      cascade: true, // 美化属性，默认true
+      add: true, // 是否添加前缀，默认true
+      remove: true, // 删除过时前缀，默认true
+      flexbox: true // 为flexbox属性添加前缀，默认true
+    }))
+  ;
   gulp.src('src/view/**/*.css')
+    .on('error', swallowError)
     .pipe(cssmin())
     .pipe(gulp.dest(AppName+'/view/'))
+    .pipe(autoprefixer({
+      // 兼容css3
+      browsers: ['last 2 versions'], // 浏览器版本
+      cascade: true, // 美化属性，默认true
+      add: true, // 是否添加前缀，默认true
+      remove: true, // 删除过时前缀，默认true
+      flexbox: true // 为flexbox属性添加前缀，默认true
+    }))
     .on('end',done)
 });
 //ES6 压缩
-gulp.task('convertJS', function(){
-  gulp.src('src/**/*.js')
+gulp.task('utilJS', function(){
+  gulp.src('src/util/**/*.js')
     .pipe(babel({
-      presets: ['es2015']
+      presets: ['env']
     }))
+    .on('error', swallowError)
     .pipe(uglify())
-    .pipe(gulp.dest(AppName))
-})
+    .on('error', swallowError)
+    .pipe(gulp.dest(AppName+'/util/'))
+    .on('error', swallowError)
+});
+gulp.task('viewJS', function(){
+  gulp.src('src/view/**/*.js')
+    .pipe(babel({
+      presets: ['env']
+    }))
+    .on('error', swallowError)
+    .pipe(uglify())
+    .on('error', swallowError)
+    .pipe(gulp.dest(AppName+'/view/'))
+    .on('error', swallowError)
+});
 //拷贝图片 和库
 gulp.task('copy',function (done) {
   gulp.src(['src/images/*'])
@@ -70,8 +104,10 @@ gulp.task('server',function () {
 //监控文件变化
 gulp.task('watch',function (done) {
   gulp.watch('src/**/*.html',['fileInclude']);
-  gulp.watch('src/**/*.css',['cssmin']);
-  gulp.watch('src/**/*.js',['convertJS'])
+  gulp.watch('src/view/**/*.css',['cssmin']);
+  gulp.watch('src/css/**/*.css',['cssmin']);
+  gulp.watch('src/util/**/*.js',['utilJS'])
+  gulp.watch('src/view/**/*.js',['viewJS'])
     .on('end',done)
 });
 
@@ -85,4 +121,9 @@ gulp.task('openBrowser',function (done) {
     .on('end',done)
 });
 
-gulp.task('default',['fileInclude','cssmin','convertJS','copy','server','watch','openBrowser']);
+function swallowError(error) {
+  console.error(error.toString());
+  this.emit('end')
+}
+
+gulp.task('default',['fileInclude','cssmin','utilJS','viewJS','copy','server','watch','openBrowser']);

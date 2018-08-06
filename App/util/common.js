@@ -1,1 +1,1 @@
-"use strict";window,console.log("我是公共的js");
+"use strict";window,console.log(222222222),console.log("我是公共的js"),console.log("我是公共的js"),console.log("我是公共的js");
